@@ -831,6 +831,88 @@ class PowerPoint2007 implements ReaderInterface
     /**
      * @param XMLReader $document
      * @param \DOMElement $node
+     * @param $oSlide
+     */
+    protected function loadFlatShape(XMLReader $document, \DOMElement $node, AbstractSlide $oSlide) {
+        $oShape = $oSlide->createFlatShape();
+        if ($oSlide instanceof AbstractSlide) {
+            $this->fileRels = $oSlide->getRelsIndex();
+        }
+
+        $geomElement = $document->getElement('p:spPr/a:prstGeom', $node);
+        //$geomElement = $document->getElement('p:psPr/a:prstGeom', $node);
+        if ($geomElement && $geomElement->hasAttribute('prst')) {
+            $oShape->setType($geomElement->getAttribute('prst'));
+        }
+
+        $oElement = $document->getElement('p:spPr/a:xfrm', $node);
+        if ($oElement instanceof \DOMElement && $oElement->hasAttribute('rot')) {
+            $oShape->setRotation(CommonDrawing::angleToDegrees($oElement->getAttribute('rot')));
+        }
+
+        $oElement = $document->getElement('p:spPr/a:xfrm/a:off', $node);
+        if ($oElement instanceof \DOMElement) {
+            if ($oElement->hasAttribute('x')) {
+                $oShape->setOffsetX(CommonDrawing::emuToPixels($oElement->getAttribute('x')));
+            }
+            if ($oElement->hasAttribute('y')) {
+                $oShape->setOffsetY(CommonDrawing::emuToPixels($oElement->getAttribute('y')));
+            }
+        }
+
+        $oElement = $document->getElement('p:spPr/a:xfrm/a:ext', $node);
+        if ($oElement instanceof \DOMElement) {
+            if ($oElement->hasAttribute('cx')) {
+                $oShape->setWidth(CommonDrawing::emuToPixels($oElement->getAttribute('cx')));
+            }
+            if ($oElement->hasAttribute('cy')) {
+                $oShape->setHeight(CommonDrawing::emuToPixels($oElement->getAttribute('cy')));
+            }
+        }
+
+        // Solid fill
+        if ($document->elementExists('p:spPr/a:solidFill', $node)) {
+            $schemeColor = null;
+            if ($document->elementExists('p:spPr/a:solidFill/a:schemeClr', $node)) {
+                $schemeClrElement = $document->getElement('p:spPr/a:solidFill/a:schemeClr', $node);
+                $accent = $schemeClrElement->getAttribute("val");
+                $masterSlide = $this->oPhpPresentation->getAllMasterSlides()[0];
+                $schemeColor = $masterSlide->getSchemeColor($accent);
+            } else if ($document->elementExists('p:spPr/a:solidFill/a:srgbClr', $node)) {
+                $srgbClrElement = $document->getElement('p:spPr/a:solidFill/a:srgbClr', $node);
+                $val = $srgbClrElement->getAttribute('val');
+                $schemeColor = new Color('FF'.$val);
+            }
+
+            if ($schemeColor != null) {
+                $oFill = new Fill();
+                $oFill->setFillType(Fill::FILL_SOLID);
+                $oFill->setStartColor($schemeColor);
+                $oShape->setFill($oFill);
+            }
+        }
+
+        // Border
+        if ($document->elementExists('p:spPr/a:ln/a:solidFill', $node)) {
+            if ($document->elementExists('p:spPr/a:ln/a:solidFill/a:schemeClr', $node)) {
+
+            }
+            $schemeClrElement = $document->getElement('p:spPr/a:ln/a:solidFill/a:schemeClr', $node);
+            $accent = $schemeClrElement->getAttribute("val");
+            $masterSlide = $this->oPhpPresentation->getAllMasterSlides()[0];
+            $schemeColor = $masterSlide->getSchemeColor($accent);
+            if ($schemeColor != null) {
+                $oBorder = new Border();
+                $oBorder->setColor($schemeColor);
+                $oShape->setBorder($oBorder);
+            }
+        }
+
+    }
+
+    /**
+     * @param XMLReader $document
+     * @param \DOMElement $node
      * @param AbstractSlide $oSlide
      * @throws \Exception
      */
@@ -879,6 +961,22 @@ class PowerPoint2007 implements ReaderInterface
                 $oShape->setPlaceHolder($placeholder);
             }
         }
+
+        if ($document->elementExists('p:txBody/a:lstStyle', $node)) {
+            if ($document->elementExists('p:txBody/a:lstStyle/a:lvl1pPr/a:defRPr', $node)) {
+                $defRprElement = $document->getElement('p:txBody/a:lstStyle/a:lvl1pPr/a:defRPr', $node);
+                if ($defRprElement->hasAttribute('sz')) {
+                    $oShape->setSize($defRprElement->getAttribute('sz')/100);
+                }
+                if ($document->elementExists('a:solidFill/a:srgbClr', $defRprElement)) {
+                    $solidColorElement = $document->getElement('a:solidFill/a:srgbClr', $defRprElement);
+                    $colorValue = $solidColorElement->getAttribute("val");
+                    $color = new Color($colorValue);
+                    $oShape->setColor($color);
+                }
+            }
+        }
+
 
         $arrayElements = $document->getElements('p:txBody/a:p', $node);
         foreach ($arrayElements as $oElement) {
@@ -1290,7 +1388,32 @@ class PowerPoint2007 implements ReaderInterface
                     $this->loadShapeDrawing($xmlReader, $oNode, $oSlide);
                     break;
                 case 'p:sp':
-                    $this->loadShapeRichText($xmlReader, $oNode, $oSlide);
+                {
+                    if ($xmlReader->elementExists('p:spPr/a:prstGeom', $oNode)) {
+                        $prstGeom = $xmlReader->getElement('p:spPr/a:prstGeom', $oNode);
+                        if ($prstGeom instanceof \DOMElement) {
+                            if ($prstGeom->hasAttribute("prst")) {
+                                $prst = $prstGeom->getAttribute("prst");
+                                switch ($prst) {
+                                    case "rect":    // maybe text or rectangle
+                                    {
+                                        if ($xmlReader->elementExists('p:style/a:lnRef', $oNode)) { // Rectangle
+                                            $this->loadFlatShape($xmlReader, $oNode, $oSlide);
+                                        } else {    // RichText
+                                            $this->loadShapeRichText($xmlReader, $oNode, $oSlide);
+                                        }
+                                    }
+                                        break;
+                                    case "ellipse":
+                                        $this->loadFlatShape($xmlReader, $oNode, $oSlide);
+                                        break;
+                                    case "rtTriangle":
+                                        break;
+                                }
+                            }
+                        }
+                    }
+                }
                     break;
                 default:
                     //var_export($oNode->tagName);

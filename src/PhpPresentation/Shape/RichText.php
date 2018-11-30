@@ -21,6 +21,7 @@ use PhpOffice\PhpPresentation\AbstractShape;
 use PhpOffice\PhpPresentation\ComparableInterface;
 use PhpOffice\PhpPresentation\Shape\RichText\Paragraph;
 use PhpOffice\PhpPresentation\Shape\RichText\TextElementInterface;
+use PhpOffice\PhpPresentation\Style\Color;
 
 /**
  * \PhpOffice\PhpPresentation\Shape\RichText
@@ -156,6 +157,20 @@ class RichText extends AbstractShape implements ComparableInterface
      */
     private $lnSpcReduction;
 
+
+    /**
+     * default text color list in style tag
+     * @var
+     */
+    private $color;
+
+
+    /**
+     * default text size list in style tag
+     * @var
+     */
+    private $size;
+
     /**
      * Create a new \PhpOffice\PhpPresentation\Shape\RichText instance
      */
@@ -166,6 +181,9 @@ class RichText extends AbstractShape implements ComparableInterface
             new Paragraph()
         );
         $this->activeParagraph    = 0;
+        $this->type = "text";
+        $this->color = null;
+        $this->size = null;
 
         // Initialize parent
         parent::__construct();
@@ -682,6 +700,33 @@ class RichText extends AbstractShape implements ComparableInterface
             $this->autoShrinkVertical = $value;
         }
         return $this;
+    }
+
+    /**
+     * set text color
+     * @param Color $color
+     */
+    public function setColor(Color $color) {
+        $this->color = $color;
+    }
+
+    /**
+     * @return Color
+     */
+    public function getColor() {
+        return $this->color;
+    }
+
+    /**
+     * set text size
+     * @param $size
+     */
+    public function setSize($size) {
+        $this->size = $size;
+    }
+
+    public function getSize() {
+        return $this->size;
     }
     
     /**

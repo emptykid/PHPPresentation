@@ -19,6 +19,7 @@ namespace PhpOffice\PhpPresentation;
 
 use PhpOffice\PhpPresentation\Shape\Hyperlink;
 use PhpOffice\PhpPresentation\Shape\Placeholder;
+use PhpOffice\PhpPresentation\Style\Border;
 use PhpOffice\PhpPresentation\Style\Fill;
 use PhpOffice\PhpPresentation\Style\Shadow;
 
@@ -335,6 +336,16 @@ abstract class AbstractShape implements ComparableInterface
     public function setFill(Fill $pValue = null)
     {
         $this->fill = $pValue;
+        return $this;
+    }
+
+    /**
+     * Set Border
+     * @param Border $border
+     * @return $this
+     */
+    public function setBorder(Border $border) {
+        $this->border = $border;
         return $this;
     }
 

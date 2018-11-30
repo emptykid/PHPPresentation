@@ -7,9 +7,16 @@
  */
 
 namespace PhpOffice\PhpPresentation\Shape;
+use PhpOffice\PhpPresentation\AbstractShape;
+use PhpOffice\PhpPresentation\ComparableInterface;
 
 
-class Rectangle
+class Rectangle extends AbstractShape implements ComparableInterface
 {
+
+    public function __construct() {
+        $this->type = "shape";
+        parent::__construct();
+    }
 
 }

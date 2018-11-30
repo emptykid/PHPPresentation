@@ -127,8 +127,8 @@ class Font implements ComparableInterface
     public function __construct()
     {
         // Initialise values
-        $this->name             = 'Calibri';
-        $this->size             = 10;
+        $this->name             = '';
+        $this->size             = 0;
         $this->characterSpacing = 0;
         $this->bold             = false;
         $this->italic           = false;
@@ -136,7 +136,7 @@ class Font implements ComparableInterface
         $this->subScript        = false;
         $this->underline        = self::UNDERLINE_NONE;
         $this->strikethrough    = false;
-        $this->color            = new Color(Color::COLOR_BLACK);
+        $this->color            = new Color(Color::COLOR_NONE);
     }
 
     /**

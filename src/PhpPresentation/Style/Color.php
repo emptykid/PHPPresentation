@@ -35,6 +35,7 @@ class Color implements ComparableInterface
     const COLOR_DARKGREEN                   = 'FF008000';
     const COLOR_YELLOW                      = 'FFFFFF00';
     const COLOR_DARKYELLOW                  = 'FF808000';
+    const COLOR_NONE                        = '';
 
     /**
      * ARGB - Alpha RGB

@@ -15,11 +15,14 @@ use PhpOffice\PhpPresentation\DocumentLayout;
 use PhpOffice\PhpPresentation\Shape\Drawing;
 use PhpOffice\PhpPresentation\Shape\Group;
 use PhpOffice\PhpPresentation\Shape\RichText;
+use PhpOffice\PhpPresentation\Shape\Rectangle;
+use PhpOffice\PhpPresentation\Shape\FlatShape;
 use PhpOffice\PhpPresentation\Shape\RichText\BreakElement;
 use PhpOffice\PhpPresentation\Shape\RichText\TextElement;
 use PhpOffice\PhpPresentation\Style\Alignment;
 use PhpOffice\PhpPresentation\Style\Bullet;
 use PhpOffice\PhpPresentation\Style\Color;
+use PhpOffice\PhpPresentation\Style\Border;
 
 require_once __DIR__ . '/../src/PhpPresentation/Autoloader.php';
 Autoloader::register();
@@ -27,7 +30,7 @@ require_once __DIR__ .'/../src/Common/Autoloader.php';
 \PhpOffice\Common\Autoloader::register();
 
 $pptReader = IOFactory::createReader('PowerPoint2007');
-$oPHPPresentation = $pptReader->load('/Users/xiaoqiang/Projects/WebSite/PHPPresentation/samples/resources/test11.pptx');
+$oPHPPresentation = $pptReader->load('/Users/xiaoqiang/Projects/WebSite/PHPPresentation/samples/resources/test_file.pptx');
 
 
 class Renderer {
@@ -44,7 +47,9 @@ class Renderer {
 
         $this->outputJson["summary"] = $this->parseMain();
         $this->outputJson["pages"] = $this->parsePage();
-        print_r($this->outputJson);
+        $js = 'var data='.json_encode($this->outputJson);
+        file_put_contents("./tests/data.js", $js);
+        //print_r($this->outputJson);
     }
 
     public function parseMain() {
@@ -115,6 +120,14 @@ class Renderer {
             }
         }
 
+        if (!is_null($shape->getBorder())) {
+            if ($shape->getBorder()->getLineStyle() != Border::LINE_NONE) {
+                $shapeInfo["borderWidth"] = $shape->getBorder()->getLineWidth();
+                $shapeInfo["borderStyle"] = $shape->getBorder()->getLineStyle();
+                $shapeInfo["borderColor"] = $shape->getBorder()->getColor()->getRGB();
+            }
+        }
+
         if ($shape instanceof Drawing\Gd) {
             $shapeInfo["type"] = "pic";
             $shapeInfo["name"] = $shape->getName();
@@ -128,6 +141,12 @@ class Renderer {
         } else if ($shape instanceof RichText) {
             $shapeInfo["type"] = "text";
             $shapeInfo["content"] = array();
+            if ($shape->getColor()) {
+                $shapeInfo["fillColor"] = $shape->getColor()->getARGB();
+            }
+            if ($shape->getSize()) {
+                $shapeInfo["size"] = $shape->getSize();
+            }
             foreach ($shape->getParagraphs() as $paragraph) {
                 foreach ($paragraph->getRichTextElements() as $text) {
                     $textInfo = array(
@@ -141,6 +160,9 @@ class Renderer {
                     array_push($shapeInfo['content'], $textInfo);
                 }
             }
+        } else if ($shape instanceof FlatShape) {
+            $shapeInfo["type"] = "shape";
+            $shapeInfo["subType"] = $shape->getType();
         }
 
         return $shapeInfo;

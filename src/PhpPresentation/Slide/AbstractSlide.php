@@ -24,6 +24,8 @@ use PhpOffice\PhpPresentation\Shape\Chart;
 use PhpOffice\PhpPresentation\Shape\Drawing\File;
 use PhpOffice\PhpPresentation\Shape\Group;
 use PhpOffice\PhpPresentation\Shape\Line;
+use PhpOffice\PhpPresentation\Shape\Rectangle;
+use PhpOffice\PhpPresentation\Shape\FlatShape;
 use PhpOffice\PhpPresentation\Shape\RichText;
 use PhpOffice\PhpPresentation\Shape\Table;
 use PhpOffice\PhpPresentation\ShapeContainerInterface;
@@ -253,6 +255,17 @@ abstract class AbstractSlide implements ComparableInterface, ShapeContainerInter
     public function createLineShape($fromX, $fromY, $toX, $toY)
     {
         $shape = new Line($fromX, $fromY, $toX, $toY);
+        $this->addShape($shape);
+        return $shape;
+    }
+
+    /**
+     * Create Flat Shape
+     *
+     * @return FlatShape
+     */
+    public function createFlatShape() {
+        $shape = new FlatShape();
         $this->addShape($shape);
         return $shape;
     }

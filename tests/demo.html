@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PPT to Html</title>
+    <style>
+        .page {
+            position: relative;
+            box-shadow: 2px 2px 2px #999;
+        }
+        .detail {
+            position: absolute;
+        }
+    </style>
+    <script src="./svg.min.js"></script>
+</head>
+<body>
+    <div id="main">
+    </div>
+
+    <script src="./data.js"></script>
+    <script>
+        var shapesMap = {};
+
+
+        var pages = data.pages;
+        var summary = data.summary;
+        var html = '';
+        for (var i=0; i<pages.length; i++) {
+            var page = pages[i];
+            html += '<div class="page" style="width: '+ summary.width +'px; height: '+summary.height+'px">';
+                for (var m=0; m < page.shapes.length; m++) {
+                    var shape = page.shapes[m];
+                    html += '<div class="detail" style="width: '+shape.width+'px; height: '+shape.height+'px;left: '+shape.left+'px; top: '+shape.top+'px;">';
+                    if (shape.type == 'text') {
+                        html += drawText(shape);
+                    } else if (shape.type == 'shape') {
+                        html += '<div class="shape" id="'+shape.hash+'"></div>';
+                        shapesMap[shape.hash] = shape;
+                    } else if (shape.type == "pic") {
+                        html += drawImage(shape);
+                    }
+                    html += '</div>';
+                }
+            html += '</div>';
+        }
+
+        document.getElementById('main').innerHTML = html;
+        renderShapes();
+
+        function drawImage(shape) {
+            var html = '<img width="100%" src="'+shape.src+'" />';
+            return html;
+        }
+
+        function renderShapes() {
+            var eles = document.getElementsByClassName("shape");
+            for (var i=0; i<eles.length; i++) {
+                var ele = eles[i];
+                var hash = ele.id;
+                if (shapesMap[hash]) {
+                    var shape = shapesMap[hash];
+                    var draw = SVG(hash).size(shape.width, shape.height);
+                    draw.ellipse(shape.width, shape.height).fill('#' + shape.fillColor);
+                }
+            }
+
+
+        }
+
+        function drawText(shape) {
+            var text = '';
+            var fillColor = shape.fillColor;
+            var size = shape.size;
+            for (var i=0; i<shape.content.length; i++) {
+                var content = shape.content[i];
+                if (content.fontColor != "") {
+                    fillColor = content.fontColor;
+                }
+                if (content.fontSize != 0) {
+                    size = content.fontSize;
+                }
+                text += '<span style=" font-size: '+size+'pt; color: #'+fillColor.replace(/FF/, '')+'">' + content.text + '</span>';
+            }
+            return text;
+        }
+    </script>
+
+</body>
+</html>

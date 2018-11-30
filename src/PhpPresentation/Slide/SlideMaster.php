@@ -161,6 +161,19 @@ class SlideMaster extends AbstractSlide implements ComparableInterface, ShapeCon
     }
 
     /**
+     * get scheme color by key
+     *
+     * @param $key
+     * @return null|SchemeColor
+     */
+    public function getSchemeColor($key) {
+        if (array_key_exists($key, $this->arraySchemeColor)) {
+            return $this->arraySchemeColor[$key];
+        }
+        return null;
+    }
+
+    /**
      * @return \PhpOffice\PhpPresentation\Style\SchemeColor[]
      */
     public function getAllSchemeColors()
